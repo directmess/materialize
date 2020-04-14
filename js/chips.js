@@ -260,7 +260,7 @@
       Chips._keydown = true;
 
       // enter
-      if (e.keyCode === 13) {
+      if (e.keyCode === 13 || e.keyCode === 32 || e.keyCode === 9) {
         // Override enter if autocompleting.
         if (this.hasAutocomplete && this.autocomplete && this.autocomplete.isOpen) {
           return;
