@@ -8001,16 +8001,14 @@ $jscomp.polyfill = function (e, r, p, m) {
     }, {
       key: "addChip",
       value: function addChip(chip) {
-        if (!this._isValid(chip) || this.chipsData.length >= this.options.limit) {
-          return;
-        }
-
         
         const regex = /[-!$%^&*()_+|~=`{}\[\]:";'<>?.\/]/g;
         chip = chip.tag.toString().replace(regex, ',')
         chip = chip.split(',');
         chip.forEach(element => {
-
+          if (!this._isValid({tag: element}) || this.chipsData.length >= this.options.limit) {
+            return;
+          }
           var renderedChip = this._renderChip({tag: element});
           this.$chips.add(renderedChip);
           this.chipsData.push({tag: element});
