@@ -7717,14 +7717,17 @@ $jscomp.polyfill = function (e, r, p, m) {
         this._handleInputKeydownBound = this._handleInputKeydown.bind(this);
         this._handleInputFocusBound = this._handleInputFocus.bind(this);
         this._handleInputBlurBound = this._handleInputBlur.bind(this);
+        this._handleInputPasteBound = this._handleInputPaste.bind(this);
 
         this.el.addEventListener('click', this._handleChipClickBound);
         document.addEventListener('keydown', Chips._handleChipsKeydown);
         document.addEventListener('keyup', Chips._handleChipsKeyup);
         this.el.addEventListener('blur', Chips._handleChipsBlur, true);
+        // this.el.addEventListener('paste', Chips._handleChipsPaste);
         this.$input[0].addEventListener('focus', this._handleInputFocusBound);
         this.$input[0].addEventListener('blur', this._handleInputBlurBound);
         this.$input[0].addEventListener('keydown', this._handleInputKeydownBound);
+        this.$input[0].addEventListener('paste', this._handleInputPasteBound);
       }
 
       /**
@@ -7738,9 +7741,11 @@ $jscomp.polyfill = function (e, r, p, m) {
         document.removeEventListener('keydown', Chips._handleChipsKeydown);
         document.removeEventListener('keyup', Chips._handleChipsKeyup);
         this.el.removeEventListener('blur', Chips._handleChipsBlur, true);
+        // this.el.removeEventListener('paste', Chips._handleChipsPaste);
         this.$input[0].removeEventListener('focus', this._handleInputFocusBound);
         this.$input[0].removeEventListener('blur', this._handleInputBlurBound);
         this.$input[0].removeEventListener('keydown', this._handleInputKeydownBound);
+        this.$input[0].removeEventListener('paste', this._handleInputPasteBound);
       }
 
       /**
@@ -7794,6 +7799,13 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "_handleInputBlur",
       value: function _handleInputBlur() {
         this.$el.removeClass('focus');
+        if (this.hasAutocomplete && this.autocomplete && this.autocomplete.isOpen) {
+          return;
+        }
+        this.addChip({
+          tag: this.$input[0].value
+        });
+        this.$input[0].value = '';
       }
 
       /**
@@ -7802,6 +7814,26 @@ $jscomp.polyfill = function (e, r, p, m) {
        */
 
     }, {
+      key: "_handleInputPaste",
+      value: function _handleInputPaste() {
+        var root = this;
+        setTimeout(function(){ 
+          if (root.hasAutocomplete && root.autocomplete && root.autocomplete.isOpen) {
+            return;
+          }
+          root.addChip({
+            tag: root.$input[0].value
+          });
+          root.$input[0].value = '';
+        }, 100);
+      }
+
+      /**
+       * Handle Input Keydown
+       * @param {Event} e
+       */
+
+    },{
       key: "_handleInputKeydown",
       value: function _handleInputKeydown(e) {
         Chips._keydown = true;
@@ -7973,16 +8005,24 @@ $jscomp.polyfill = function (e, r, p, m) {
           return;
         }
 
-        var renderedChip = this._renderChip(chip);
-        this.$chips.add(renderedChip);
-        this.chipsData.push(chip);
-        $(this.$input).before(renderedChip);
-        this._setPlaceholder();
+        
+        const regex = /[-!$%^&*()_+|~=`{}\[\]:";'<>?.\/]/g;
+        chip = chip.tag.toString().replace(regex, ',')
+        chip = chip.split(',');
+        chip.forEach(element => {
 
-        // fire chipAdd callback
-        if (typeof this.options.onChipAdd === 'function') {
-          this.options.onChipAdd.call(this, this.$el, renderedChip);
-        }
+          var renderedChip = this._renderChip({tag: element});
+          this.$chips.add(renderedChip);
+          this.chipsData.push({tag: element});
+          $(this.$input).before(renderedChip);
+          this._setPlaceholder();
+
+          // fire chipAdd callback
+          if (typeof this.options.onChipAdd === 'function') {
+            this.options.onChipAdd.call(this, this.$el, renderedChip);
+          }
+        });
+        
       }
 
       /**
